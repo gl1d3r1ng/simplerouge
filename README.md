@@ -1,18 +1,21 @@
-I decided, making game engine as first project is too hard. Funmade TUI game.
+I decided, making game engine (terminalia) as first project is too hard. Funmade TUI game.
 
 Plans done:
 - [x] movement
 - [x] shadows
 - [x] object system
+- [x] lights
+- [x] flag system
+- [x] fog proto
 
 0:
 - [ ] ui labels (for heath, etc)
 - [ ] phantom labels
 - [ ] ranggen
-- [ ] lights
+- [ ] colors... ugh... yes, colors...
 - [ ] art mode
 - [ ] action system
-- [ ] flag system
+- [ ] chunk system
 
 1:
 - [ ] entities & enemies
@@ -23,6 +26,9 @@ Plans done:
 - [ ] ranged fight
 - [ ] damage in circle
 - [ ] damage in cone
+
+3:
+- [ ] transform to game engine?
 
 65535:
 - [ ] on rust?
