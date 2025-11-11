@@ -16,6 +16,9 @@ Plans done:
 - [ ] art mode
 - [ ] action system
 - [ ] chunk system
+- [ ] circle area
+- [ ] line area
+- [ ] square area
 
 1:
 - [ ] entities & enemies
