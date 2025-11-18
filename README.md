@@ -7,28 +7,31 @@ Plans done:
 - [x] lights
 - [x] flag system
 - [x] fog proto
+- [x] xor areas
+- [x] circle area
+- [x] line area
+- [x] square area
 
 0:
+- [ ] health & damage system
 - [ ] ui labels (for heath, etc)
 - [ ] phantom labels
-- [ ] ranggen
 - [ ] colors... ugh... yes, colors...
-- [ ] art mode
-- [ ] action system
-- [ ] chunk system
-- [ ] circle area
-- [ ] line area
-- [ ] square area
+- [ ] action system <- next
+- [ ] chunk system?
+- [ ] damage in circle
+- [ ] items
 
 1:
-- [ ] entities & enemies
-- [ ] health & damage system
+- [ ] entities & enemies (some kind of suffering, mb better to connect chinese skynet or llama or something like that)
 - [ ] melee fight
+- [ ] ranggen
+- [ ] art mode
 
 2:
 - [ ] ranged fight
-- [ ] damage in circle
 - [ ] damage in cone
+- [ ] aliances
 
 3:
 - [ ] transform to game engine?

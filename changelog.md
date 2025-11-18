@@ -1,3 +1,7 @@
+## v0.0.3:
+- view field rework
+- funcs for getting list points in some area (square, line, circle, xor areas)
+
 ## v0.0.2:
 - light improved
 - fog basic

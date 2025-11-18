@@ -12,16 +12,19 @@ viewy = -1
 camera = {"x": 0, "y": 0}
 viewradius = 30
 
-blueprints = {"player": {"name": "player", "sym": "@", "coll": True, "shadow": False, "light": 8},\
-              "wall": {"name": "wall", "sym": "#", "coll": True, "shadow": True, "light": -1}, \
-              "inv_wall": {"name": "empty", "sym": ".", "coll": True, "shadow": False, "light": -1}, \
-              "false_wall": {"name": "wall", "sym": "#", "coll": False, "shadow": True, "light": -1}, \
-            "lightsource": {"name": "light", "sym": "3", "coll": False, "shadow": False, "light": 16},\
-              "fog": {"name": "fog", "sym": "*", "coll": False, "shadow": True, "light": -1}}
+blueprints = {"player": {"name": "player", "icon": "@", "coll": True, "shadow": False, "light": 5, "entity": {"control": "gamer", "health": 100}},\
+              "npc": {"name": "john", "icon": "J", "coll": True, "shadow": False},\
+              "wall": {"name": "wall", "icon": "#", "coll": True, "shadow": True}, \
+              "inv_wall": {"name": "empty", "icon": ".", "coll": True, "shadow": False}, \
+              "false_wall": {"name": "wall", "icon": "#", "coll": False, "shadow": True}, \
+              "door": {"name": "door", "icon": "+", "coll": True, "shadow": True, "state": "closed"}, \
+            "lightsource": {"name": "light", "icon": "3", "coll": False, "shadow": False, "light": 13},\
+              "fog": {"name": "fog", "icon": "*", "coll": False, "shadow": True}}
 
-flags = {}
+flags = {"state": "alive"}
 objects = {}
 lights = {} # {"radius": int, "x": int, "y": int, "color": list}
+coords = {}
 actions = {}
 entities = {} # {"aliance": str, "behavior": str, "health": int, ""}
 
@@ -33,41 +36,65 @@ def set_flag(name: str, value) -> None:
     flags[name] = value
 
 def get_flag(name: str):
-    # if name in flags:
+    # if name in flags: ## will be returned in future
     return flags[name]
     # return None
+
+#### Coord cache
+def add_coords(point: list | tuple, name: str) -> None:
+    point = tuple(point)
+    if point not in coords:
+        coords[point] = []
+    coords[point].append(name)
+
+def rm_coords(point: list | tuple, name: str) -> None:
+    point = tuple(point)
+    coords[point].remove(name)
+
+def check_coords(point: list | tuple, prop: str) -> bool:
+    point = tuple(point)
+    if point in coords:
+        for name in coords[point]:
+            if get_object(name, prop) == True: ## works with bool typed props
+                return True
+    return False
 
 #### Objects
 def add_object(name: str, bp: str, x: int, y: int, params: dict = {}) -> None:
     objects[name] = blueprints[bp] | params
     objects[name]["x"] = x
     objects[name]["y"] = y
-    mod_light(name, x, y, get_object(name, "light"))
+    add_coords((x, y), name)
+    mod_light(name, x, y, get_light_prop(name))
 
 def rm_object(name: str):
     if name in objects:
+        x = get_object(name, "x")
+        y = get_object(name, "y")
         del objects[name]
+        rm_coords((x, y), name)
         if name in lights:
             del lights[name]
 
 def ch_object(name: str, params: dict):
     objects[name] = objects[name] | params
-    mod_light(name, get_object(name, "x"), get_object(name, "y"), get_object(name, "light"))
+    mod_light(name, get_object(name, "x"), get_object(name, "y"), get_light_prop(name))
 
 def get_object(name: str, prop: str):
     return objects[name][prop]
 
-def move_object(name: str, x: int, y: int, ignore_coll = False):
-    newx = get_object(name, "x") + x
-    newy = get_object(name, "y") + y
-    for object in objects:
-        if get_object(object, "x") == newx and get_object(object, "y") == newy:
-            if get_object(object, "coll") and not ignore_coll:
-                break
-    else:
+def move_object(name: str, xshift: int, yshift: int, ignore_coll = False):
+    x = get_object(name, "x")
+    y = get_object(name, "y")
+    newx = x + xshift
+    newy = y + yshift
+
+    if not check_coords([newx, newy], "coll") or ignore_coll:
         ch_object(name, {"x": newx, "y": newy})
+        rm_coords((x, y), name)
+        add_coords((newx, newy), name)
         if get_object(name, "light") != -1:
-            mod_light(name, newx, newy, get_object(name, "light"))
+            mod_light(name, newx, newy, get_light_prop(name))
 
 #### Areas
 def line_area(p1: list, p2: list) -> list:
@@ -82,10 +109,10 @@ def line_area(p1: list, p2: list) -> list:
     if y == x and x == 0:
         pass
     elif x == 0:
-        for seg in range(1, abs(y) + 1):
+        for seg in range(abs(y) + 1):
             points.append((xstart, ystart + seg * y / abs(y)))
     elif y == 0:
-        for seg in range(1, abs(x) + 1):
+        for seg in range(abs(x) + 1):
             points.append((xstart + seg * x / abs(x), ystart))
     else:
         limit = max(abs(x), abs(y))
@@ -93,7 +120,7 @@ def line_area(p1: list, p2: list) -> list:
         dx = x/limit
         dy = y/limit
 
-        for seg in range(1, limit + 1):
+        for seg in range(limit + 1):
             points.append((round(xstart + dx*seg), round(ystart + dy*seg)))
     return points
 
@@ -120,7 +147,19 @@ def xor_areas(area1: list, area2: list) -> list:
             area.remove(i)
     return area
 
+#### Levels
+def init_level():
+    ...
+
+def load_level():
+    ...
+
 #### Light
+def get_light_prop(name: str) -> int:
+    if "light" in objects[name]:
+        return get_object(name, "light")
+    return -1
+
 def mod_light(name: str, x: int, y: int, radius: int):
     if radius != -1:
         lights[name] = {"x": x, "y": y, "radius": radius}
@@ -152,6 +191,13 @@ def fogs_update():
         fogs.pop(name)
         rm_object(name)
 
+#### Doors
+def interact_door(id):
+    match get_object(id, "state"):
+        case "closed":
+            ch_object(id, {"icon": "-", "coll": False, "shadow": False})
+        case "open":
+            ch_object(id, {"icon": "+", "coll": True, "shadow": True})
 
 ## UI funcs
 def update_screen():
@@ -160,7 +206,7 @@ def update_screen():
     viewy = term.height // 2
     buf = {}
     objectbuf = {}
-    viewbuf = {}
+    #viewbuf = {}
 
     ## What objects COULD be displayed
     for object in objects:
@@ -168,52 +214,44 @@ def update_screen():
         y = get_object(object, "y")
 
         if x > camera["x"] - viewx and x < camera["x"] + viewx and y > camera["y"] - viewy and y < camera["y"] + viewy:
-            objectbuf[(x, y)] = {"name": object, "sym": get_object(object, "sym"), "shadow": get_object(object, "shadow")}
+            objectbuf[(x, y)] = {"name": object, "icon": get_object(object, "icon"), "shadow": get_object(object, "shadow")}
 
-    ## remove object not in players field of view
-    for angle in range(-180 * 3, 180 * 3 + 1):
-        angle //= 3
-        xcof = math.cos(math.radians(angle))
-        ycof = math.sin(math.radians(angle))
-        for d in range(1, viewradius):
-            x = round(camera["x"] + d * xcof)
-            y = round(camera["y"] + d * ycof)
-            key = (x, y)
-            # color = round(255 * (1 - 1 / viewradius * d))
-            if key in objectbuf:
-                object = objectbuf[key]
-                viewbuf[key] = object #| {"color": bgcolor + fgcolor}
-                if object["shadow"]:
-                    break
-            else:
-                viewbuf[key] = {"name": "emptyness", "sym": "."}#, "color": bgcolor+ fgcolor}
+    objectbuf[(get_object("player", "x"), get_object("player", "y"))] = {"name": "player", "icon": get_object("player", "icon")}#"color": term.on_color_rgb(255,255,255) + term.color_rgb(0,0,0)}
 
-    viewbuf[(get_object("player", "x"), get_object("player", "y"))] = {"name": "player", "sym": get_object("player", "sym")}#"color": term.on_color_rgb(255,255,255) + term.color_rgb(0,0,0)}
-
-    ## final steps + darkness
+    ## fov + darkness
     for screen_y, abs_y in enumerate(range(camera["y"] + viewy, camera["y"] + viewy - term.height + 2 ,  -1)):
         for screen_x, abs_x in enumerate(range(camera["x"] - viewx, camera["x"] - viewx + term.width - 1)):
             key = (abs_x, abs_y)
-            if key in viewbuf:
-                # buf += viewbuf[(x, y)]["color"] + viewbuf[(x, y)]["sym"]
-                for source, Source in lights.items():
-                    if Source["radius"] >= math.dist([Source["x"], Source["y"]], key):
-                        buf[(screen_x, screen_y)] = viewbuf[key]["sym"]
-                        break
+            if math.dist(camera.values(), key) <= viewradius: ## if point in viewradius
+                if not any(check_coords(p, "shadow") for p in line_area(list(camera.values()), list(key))[1:-1]): ## if in player's viewfield
+                    for Source in lights.values():
+                        if Source["radius"] > math.dist([Source["x"], Source["y"]], key):
+                            if not any(check_coords(p, "shadow") for p in line_area([Source["x"], Source["y"]], list(key))[1:-1]):
+                                if key in objectbuf:
+                                    buf[(screen_x, screen_y)] = objectbuf[key]["icon"]
+                                else:
+                                    buf[(screen_x, screen_y)] = "."
+                                break
+                            else:
+                                buf[(screen_x, screen_y)] = " "
+                    else:
+                        buf[(screen_x, screen_y)] = " "
                 else:
                     buf[(screen_x, screen_y)] = " "
             else:
-                buf[(screen_x, screen_y)] = " "# term.on_color_rgb(0,0,0) + " "
+                buf[(screen_x, screen_y)] = " "
         buf[(screen_x, screen_y)] += "\n"
 
     add_text(1, 1, "Text")
+    add_text(1, 2, str(camera["x"]))
+    add_text(1, 3, str(camera["y"]))
 
     print(term.home + term.clear + "".join(buf.values())) # Wow, I scrolled at the end of this func.
 
 def add_text(x: int, y: int, text: str) -> None:
     global buf
-    for num, symbol in enumerate(text):
-        buf[(x + num, y)] = symbol
+    for num, iconbol in enumerate(text):
+        buf[(x + num, y)] = iconbol
 
 #### Actions
 def action_update():
@@ -229,12 +267,15 @@ if __name__ == "__main__":
     add_object("player", "player", 0, 0)
     add_object("wall0", "wall", 2, 0)
     add_object("wall1", "wall", -1, 2)
+    add_object("light2", "lightsource", -1, 2)
     add_object("wall2", "wall", 0, -1)
-    add_object("light0", "lightsource", -7, 7)
-    add_object("light1", "lightsource", -14, -14)
+    add_object("light0", "lightsource", -8, 14)
+    add_object("light1", "lightsource", -16, -16)
+    for num in range(9):
+        add_object("fog_area" + str(num), "fog", -7 - num % 3, 3 + num // 3)
     for num, p in enumerate(\
                 xor_areas(\
-                    xor_areas(square_area(-18, -18, 9, 9), square_area(-17, -17, 7, 7)),\
+                    xor_areas(square_area(-20, -20, 11, 11), square_area(-19, -19, 9, 9)),\
                     square_area(-15, -10, 1, 1))):
         add_object("room_wall" + str(num), "wall", *p)
 
@@ -264,5 +305,7 @@ if __name__ == "__main__":
                             camera["x"] = get_object("player", "x")
                             camera["y"] = get_object("player", "y")
                             fogs_update()
+                case "item_menu":
+                    ...
                 case "art":
                     ...
