@@ -16,7 +16,7 @@ Plans done:
 - [ ] health & damage system
 - [ ] ui labels (for heath, etc)
 - [ ] phantom labels
-- [ ] colors... ugh... yes, colors...
+- [x] colors... ugh... yes, colors...
 - [ ] action system <- next
 - [ ] chunk system?
 - [ ] damage in circle
